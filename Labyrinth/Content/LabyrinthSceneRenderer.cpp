@@ -12,8 +12,9 @@ LabyrinthSceneRenderer::LabyrinthSceneRenderer(const std::shared_ptr<DX::DeviceR
 	m_sizeY(0),
 	m_cellWidth(100.0f),
 	m_cellHeight(100.0f),
-	m_cursorX(0),
-	m_cursorY(0) {
+	m_originX(0),
+	m_originY(0),
+	m_playerCount(4) {
 
 	// Create device independent resources
 
@@ -22,6 +23,11 @@ LabyrinthSceneRenderer::LabyrinthSceneRenderer(const std::shared_ptr<DX::DeviceR
 	);
 
 	createDeviceDependentResources();
+
+	for (int i(0); i < m_playerCount; ++i) {
+		m_cursorsX.push_back(0);
+		m_cursorsY.push_back(0);
+	}
 
 	loadLabyrinthFromFile(m_labyrinthPatternFileName);
 }
@@ -104,16 +110,19 @@ void LabyrinthSceneRenderer::render() {
 		}
 	}
 	D2D1_POINT_2F p1, p2;
-	p1.x = m_cursorX * m_cellWidth + m_cellWidth / 5.0f;
-	p1.y = m_cursorY * m_cellHeight + m_cellHeight / 5.0f;
-	p2.x = (m_cursorX+1) * m_cellWidth - m_cellWidth / 5.0f;
-	p2.y = (m_cursorY+1) * m_cellHeight - m_cellHeight / 5.0f;
-	context->DrawLine(p1, p2, m_blackBrush.Get(), 5.0f);
-	p1.x = (m_cursorX+1) * m_cellWidth - m_cellWidth / 5.0f;
-	p1.y = m_cursorY * m_cellHeight + m_cellHeight / 5.0f;
-	p2.x = m_cursorX * m_cellWidth + m_cellWidth / 5.0f;
-	p2.y = (m_cursorY + 1) * m_cellHeight - m_cellHeight / 5.0f;
-	context->DrawLine(p1, p2, m_blackBrush.Get(), 5.0f);
+	int sqrtNbPlayer(ceil(sqrt(m_playerCount)));
+	for (int p(0); p < m_playerCount; ++p) {
+		p1.x = m_cursorsX[p] * m_cellWidth + m_cellWidth / 20.0f + (p%sqrtNbPlayer)*m_cellWidth/sqrtNbPlayer;
+		p1.y = m_cursorsY[p] * m_cellHeight + m_cellHeight / 20.0f + (p/sqrtNbPlayer)*m_cellHeight/sqrtNbPlayer;
+		p2.x = m_cursorsX[p] * m_cellWidth - m_cellWidth / 20.0f + (p%sqrtNbPlayer + 1)*m_cellWidth/sqrtNbPlayer;
+		p2.y = m_cursorsY[p] * m_cellHeight - m_cellHeight / 20.0f+ (p/sqrtNbPlayer + 1)*m_cellHeight/sqrtNbPlayer;
+		context->DrawLine(p1, p2, m_blackBrush.Get(), 10.0f/(sqrtNbPlayer*sqrtNbPlayer));
+		p1.x = m_cursorsX[p] * m_cellWidth - m_cellWidth / 20.0f + (p%sqrtNbPlayer + 1)*m_cellWidth / sqrtNbPlayer;
+		p1.y = m_cursorsY[p] * m_cellHeight + m_cellHeight / 20.0f + (p / sqrtNbPlayer)*m_cellHeight / sqrtNbPlayer;
+		p2.x = m_cursorsX[p] * m_cellWidth + m_cellWidth / 20.0f + (p%sqrtNbPlayer)*m_cellWidth / sqrtNbPlayer;
+		p2.y = m_cursorsY[p] * m_cellHeight - m_cellHeight / 20.0f + (p/sqrtNbPlayer + 1)*m_cellHeight / sqrtNbPlayer;
+		context->DrawLine(p1, p2, m_blackBrush.Get(), 10.0f/(sqrtNbPlayer*sqrtNbPlayer));
+	}
 
 	// Ignore D2DERR_RECREATE_TARGET here. This error indicates that the device
 	// is lost. It will be handled during the next call to Present.
@@ -125,26 +134,47 @@ void LabyrinthSceneRenderer::render() {
 	context->RestoreDrawingState(m_stateBlock.Get());
 }
 
-void LabyrinthSceneRenderer::moveUp() {
-	moveTo(m_cursorX, m_cursorY -1);
+void LabyrinthSceneRenderer::moveUp(int player) {
+	moveTo(m_cursorsX[player], m_cursorsY[player] -1, player);
 }
-void LabyrinthSceneRenderer::moveDown() {
-	moveTo(m_cursorX, m_cursorY + 1);
+void LabyrinthSceneRenderer::moveDown(int player) {
+	moveTo(m_cursorsX[player], m_cursorsY[player] + 1, player);
 }
-void LabyrinthSceneRenderer::moveLeft() {
-	moveTo(m_cursorX-1, m_cursorY);
+void LabyrinthSceneRenderer::moveLeft(int player) {
+	moveTo(m_cursorsX[player]-1, m_cursorsY[player], player);
 }
-void LabyrinthSceneRenderer::moveRight() {
-	moveTo(m_cursorX+1, m_cursorY);
+void LabyrinthSceneRenderer::moveRight(int player) {
+	moveTo(m_cursorsX[player]+1, m_cursorsY[player], player);
 }
 
-void LabyrinthSceneRenderer::moveTo(int x, int y) {
+void LabyrinthSceneRenderer::moveTo(int x, int y, int player) {
 	if (x < m_sizeX && x >= 0 && y < m_sizeY && y >= 0) {
 		if (m_labyrinth[y][x] != '#') {
-			m_cursorX = x;
-			m_cursorY = y;
+			m_cursorsX[player] = x;
+			m_cursorsY[player] = y;
 			if (m_labyrinth[y][x] == 'E')
 				reloadFromFile();
+		}
+	}
+}
+
+void LabyrinthSceneRenderer::addPlayer() {
+	m_cursorsX.push_back(m_originX);
+	m_cursorsY.push_back(m_originY);
+	++m_playerCount;
+}
+
+void LabyrinthSceneRenderer::removePlayer(int player) {
+	if (m_playerCount > 1) {
+		if (player == -1) {
+			m_cursorsX.pop_back();
+			m_cursorsY.pop_back();
+			--m_playerCount;
+		}
+		else if (player < m_playerCount) {
+			m_cursorsX.erase(m_cursorsX.begin() + player);
+			m_cursorsY.erase(m_cursorsY.begin() + player);
+			--m_playerCount;
 		}
 	}
 }
@@ -201,8 +231,12 @@ void LabyrinthSceneRenderer::loadLabyrinthFromFile(std::string filename) {
 		}
 		while (str.front() != '\n') {
 			if (str.front() == 'o' || str.front() == 'O') {
-				m_cursorX = (int)m_labyrinth.back().size();
-				m_cursorY = (int)m_labyrinth.size() - 1;
+				for (int i(0); i < m_playerCount; ++i) {
+					m_originX = (int)m_labyrinth.back().size();
+					m_originY = (int)m_labyrinth.size() - 1;
+					m_cursorsX[i] = m_originX;
+					m_cursorsY[i] = m_originY;
+				}
 				str.front() = 'O';
 			}
 			if (str.front() == 'e' || str.front() == 'E') {
@@ -234,7 +268,7 @@ void LabyrinthSceneRenderer::loadLabyrinthFromFile(std::string filename) {
 			log(m_labyrinth[i][j]);
 		log('\n');
 	}
-	log("cursor at (" + m_cursorX + ";" + m_cursorY + ").\n");
+	log("cursor at (" + m_cursorsX[0] + ";" + m_cursorsY[0] + ").\n");
 
 	// fstr automatically closed
 }

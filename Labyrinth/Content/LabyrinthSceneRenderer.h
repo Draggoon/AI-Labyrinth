@@ -26,13 +26,15 @@ namespace Labyrinth {
 		void update(DX::StepTimer const& timer);
 		void render();
 		
+		void addPlayer();
+		void removePlayer(int player=-1);
 		void reloadFromFile();
 
-		void moveUp();
-		void moveDown();
-		void moveLeft();
-		void moveRight();
-		void moveTo(int x, int y);
+		void moveUp(int player=0);
+		void moveDown(int player=0);
+		void moveLeft(int player=0);
+		void moveRight(int player=0);
+		void moveTo(int x, int y, int player=0);
 
 	private:
 		// Cached pointer to device resources.
@@ -53,9 +55,13 @@ namespace Labyrinth {
 		int m_sizeY;
 		float m_cellWidth;
 		float m_cellHeight;
+		int m_originX;
+		int m_originY;
 
-		int m_cursorX;
-		int m_cursorY;
+		int m_playerCount;
+		std::vector<int> m_cursorsX;
+		std::vector<int> m_cursorsY;
+
 
 		// Logging / Debug
 		void log(std::wstring ws);

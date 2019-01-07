@@ -102,6 +102,10 @@ void LabyrinthMain::keyPressed(Windows::UI::Core::KeyEventArgs^ args) {
 		m_labyrinthSceneRenderer->moveRight();
 	if (args->VirtualKey == Windows::System::VirtualKey::F5)
 		m_labyrinthSceneRenderer->reloadFromFile();
+	if (args->VirtualKey == Windows::System::VirtualKey::Add)
+		m_labyrinthSceneRenderer->addPlayer();
+	if (args->VirtualKey == Windows::System::VirtualKey::Subtract)
+		m_labyrinthSceneRenderer->removePlayer(-1);
 }
 
 // Notifies renderers that device resources need to be released.
