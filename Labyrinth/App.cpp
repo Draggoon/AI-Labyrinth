@@ -57,6 +57,11 @@ void App::Initialize(CoreApplicationView^ applicationView)
 // Called when the CoreWindow object is created (or re-created).
 void App::SetWindow(CoreWindow^ window)
 {
+	window->KeyDown +=
+		ref new TypedEventHandler<CoreWindow^, KeyEventArgs^>(this, &App::OnKeyPressed);
+
+	
+
 	window->SizeChanged += 
 		ref new TypedEventHandler<CoreWindow^, WindowSizeChangedEventArgs^>(this, &App::OnWindowSizeChanged);
 
@@ -170,6 +175,13 @@ void App::OnVisibilityChanged(CoreWindow^ sender, VisibilityChangedEventArgs^ ar
 void App::OnWindowClosed(CoreWindow^ sender, CoreWindowEventArgs^ args)
 {
 	m_windowClosed = true;
+}
+
+void App::OnKeyPressed(CoreWindow^ sender, KeyEventArgs^ args) {
+	if(args->VirtualKey == Windows::System::VirtualKey::Escape)
+		CoreApplication::Exit();
+	else
+		m_main->keyPressed(args);
 }
 
 // DisplayInformation event handlers.

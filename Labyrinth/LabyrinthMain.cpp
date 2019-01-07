@@ -15,9 +15,13 @@ LabyrinthMain::LabyrinthMain(const std::shared_ptr<DX::DeviceResources>& deviceR
 	m_deviceResources->RegisterDeviceNotify(this);
 
 	// TODO: Replace this with your app's content initialization.
-	m_sceneRenderer = std::unique_ptr<Sample3DSceneRenderer>(new Sample3DSceneRenderer(m_deviceResources));
+	//m_sceneRenderer = std::unique_ptr<Sample3DSceneRenderer>(new Sample3DSceneRenderer(m_deviceResources));
 
 	m_fpsTextRenderer = std::unique_ptr<SampleFpsTextRenderer>(new SampleFpsTextRenderer(m_deviceResources));
+
+	m_labyrinthSceneRenderer = std::unique_ptr<LabyrinthSceneRenderer>(new LabyrinthSceneRenderer(m_deviceResources));
+
+	
 
 	// TODO: Change the timer settings if you want something other than the default variable timestep mode.
 	// e.g. for 60 FPS fixed timestep update logic, call:
@@ -37,7 +41,8 @@ LabyrinthMain::~LabyrinthMain()
 void LabyrinthMain::CreateWindowSizeDependentResources() 
 {
 	// TODO: Replace this with the size-dependent initialization of your app's content.
-	m_sceneRenderer->CreateWindowSizeDependentResources();
+	//m_sceneRenderer->CreateWindowSizeDependentResources();
+	m_labyrinthSceneRenderer->createWindowSizeDependentResources();
 }
 
 // Updates the application state once per frame.
@@ -47,7 +52,8 @@ void LabyrinthMain::Update()
 	m_timer.Tick([&]()
 	{
 		// TODO: Replace this with your app's content update functions.
-		m_sceneRenderer->Update(m_timer);
+		//m_sceneRenderer->Update(m_timer);
+		m_labyrinthSceneRenderer->update(m_timer);
 		m_fpsTextRenderer->Update(m_timer);
 	});
 }
@@ -78,23 +84,37 @@ bool LabyrinthMain::Render()
 
 	// Render the scene objects.
 	// TODO: Replace this with your app's content rendering functions.
-	m_sceneRenderer->Render();
+	//m_sceneRenderer->Render();
+	m_labyrinthSceneRenderer->render();
 	m_fpsTextRenderer->Render();
 
 	return true;
 }
 
+void LabyrinthMain::keyPressed(Windows::UI::Core::KeyEventArgs^ args) {
+	if (args->VirtualKey == Windows::System::VirtualKey::Up)
+		m_labyrinthSceneRenderer->moveUp();
+	if (args->VirtualKey == Windows::System::VirtualKey::Down)
+		m_labyrinthSceneRenderer->moveDown();
+	if (args->VirtualKey == Windows::System::VirtualKey::Left)
+		m_labyrinthSceneRenderer->moveLeft();
+	if (args->VirtualKey == Windows::System::VirtualKey::Right)
+		m_labyrinthSceneRenderer->moveRight();
+	if (args->VirtualKey == Windows::System::VirtualKey::F5)
+		m_labyrinthSceneRenderer->reloadFromFile();
+}
+
 // Notifies renderers that device resources need to be released.
 void LabyrinthMain::OnDeviceLost()
 {
-	m_sceneRenderer->ReleaseDeviceDependentResources();
+	//m_sceneRenderer->ReleaseDeviceDependentResources();
 	m_fpsTextRenderer->ReleaseDeviceDependentResources();
 }
 
 // Notifies renderers that device resources may now be recreated.
 void LabyrinthMain::OnDeviceRestored()
 {
-	m_sceneRenderer->CreateDeviceDependentResources();
+	//m_sceneRenderer->CreateDeviceDependentResources();
 	m_fpsTextRenderer->CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
 }
