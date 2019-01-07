@@ -14,21 +14,9 @@ LabyrinthMain::LabyrinthMain(const std::shared_ptr<DX::DeviceResources>& deviceR
 	// Register to be notified if the Device is lost or recreated
 	m_deviceResources->RegisterDeviceNotify(this);
 
-	// TODO: Replace this with your app's content initialization.
-	//m_sceneRenderer = std::unique_ptr<Sample3DSceneRenderer>(new Sample3DSceneRenderer(m_deviceResources));
-
 	m_fpsTextRenderer = std::unique_ptr<SampleFpsTextRenderer>(new SampleFpsTextRenderer(m_deviceResources));
-
 	m_labyrinthSceneRenderer = std::unique_ptr<LabyrinthSceneRenderer>(new LabyrinthSceneRenderer(m_deviceResources));
 
-	
-
-	// TODO: Change the timer settings if you want something other than the default variable timestep mode.
-	// e.g. for 60 FPS fixed timestep update logic, call:
-	/*
-	m_timer.SetFixedTimeStep(true);
-	m_timer.SetTargetElapsedSeconds(1.0 / 60);
-	*/
 }
 
 LabyrinthMain::~LabyrinthMain()
@@ -40,8 +28,6 @@ LabyrinthMain::~LabyrinthMain()
 // Updates application state when the window size changes (e.g. device orientation change)
 void LabyrinthMain::CreateWindowSizeDependentResources() 
 {
-	// TODO: Replace this with the size-dependent initialization of your app's content.
-	//m_sceneRenderer->CreateWindowSizeDependentResources();
 	m_labyrinthSceneRenderer->createWindowSizeDependentResources();
 }
 
@@ -51,8 +37,6 @@ void LabyrinthMain::Update()
 	// Update scene objects.
 	m_timer.Tick([&]()
 	{
-		// TODO: Replace this with your app's content update functions.
-		//m_sceneRenderer->Update(m_timer);
 		m_labyrinthSceneRenderer->update(m_timer);
 		m_fpsTextRenderer->Update(m_timer);
 	});
@@ -83,14 +67,17 @@ bool LabyrinthMain::Render()
 	context->ClearDepthStencilView(m_deviceResources->GetDepthStencilView(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// Render the scene objects.
-	// TODO: Replace this with your app's content rendering functions.
-	//m_sceneRenderer->Render();
 	m_labyrinthSceneRenderer->render();
 	m_fpsTextRenderer->Render();
 
 	return true;
 }
 
+/**
+* keyPressed event
+*
+*	Called when a keypress event is captured by the application
+*/
 void LabyrinthMain::keyPressed(Windows::UI::Core::KeyEventArgs^ args) {
 	if (args->VirtualKey == Windows::System::VirtualKey::Up)
 		m_labyrinthSceneRenderer->moveUp();
@@ -111,14 +98,14 @@ void LabyrinthMain::keyPressed(Windows::UI::Core::KeyEventArgs^ args) {
 // Notifies renderers that device resources need to be released.
 void LabyrinthMain::OnDeviceLost()
 {
-	//m_sceneRenderer->ReleaseDeviceDependentResources();
+	m_labyrinthSceneRenderer->releaseDeviceDependentResources();
 	m_fpsTextRenderer->ReleaseDeviceDependentResources();
 }
 
 // Notifies renderers that device resources may now be recreated.
 void LabyrinthMain::OnDeviceRestored()
 {
-	//m_sceneRenderer->CreateDeviceDependentResources();
+	m_labyrinthSceneRenderer->createDeviceDependentResources();
 	m_fpsTextRenderer->CreateDeviceDependentResources();
 	CreateWindowSizeDependentResources();
 }

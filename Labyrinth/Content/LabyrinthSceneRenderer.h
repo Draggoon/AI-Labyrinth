@@ -23,18 +23,18 @@ namespace Labyrinth {
 		void createDeviceDependentResources();
 		void createWindowSizeDependentResources();
 		void releaseDeviceDependentResources();
-		void update(DX::StepTimer const& timer);
-		void render();
+		void update(DX::StepTimer const& timer);	/// Not used yet. Called every frame.
+		void render();	/// Display the current state of the game
 		
-		void addPlayer();
-		void removePlayer(int player=-1);
-		void reloadFromFile();
+		void addPlayer();	/// Add a player to the game
+		void removePlayer(int player=-1);	/// Remove one player (the last added if -1)
+		void reloadFromFile();	/// Reload the pattern from the file and reset the positions
 
-		void moveUp(int player=0);
-		void moveDown(int player=0);
-		void moveLeft(int player=0);
-		void moveRight(int player=0);
-		void moveTo(int x, int y, int player=0);
+		void moveUp(int player=0);	/// Move the player 1 cell up
+		void moveDown(int player=0);	/// Move the player 1 cell down
+		void moveLeft(int player=0);	/// Move the player 1 cell to the left
+		void moveRight(int player=0);	/// Move the player 1 cell to the right
+		void moveTo(int x, int y, int player=0);	/// Move the cursor of a player to another cell
 
 	private:
 		// Cached pointer to device resources.
@@ -48,22 +48,21 @@ namespace Labyrinth {
 		Microsoft::WRL::ComPtr<ID2D1DrawingStateBlock1> m_stateBlock;
 
 		// Labyrinth resources
-		void loadLabyrinthFromFile(std::string filename);
-		std::string m_labyrinthPatternFileName;
-		std::vector< std::vector<char> > m_labyrinth;
-		int m_sizeX;
-		int m_sizeY;
-		float m_cellWidth;
-		float m_cellHeight;
-		int m_originX;
-		int m_originY;
+		void loadLabyrinthFromFile(std::string filename);	/// Load the labyrinth patter from a file
+		std::string m_labyrinthPatternFileName;	/// The default filename to load
+		std::vector< std::vector<char> > m_labyrinth;	/// Vector to store the labyrinth data (walls, origin, end...)
+		int m_sizeX;	/// The width in cells of the labyrinth
+		int m_sizeY;	/// The height in cells of the labyrinth
+		int m_originX;	/// The starting cell X coordinate
+		int m_originY;	/// The starting cell Y coordinate
+		int m_playerCount;	/// Number of player actually playing
+		std::vector<int> m_cursorsX;	/// The X coodinate of each player
+		std::vector<int> m_cursorsY;	/// The Y coordinate of each player
 
-		int m_playerCount;
-		std::vector<int> m_cursorsX;
-		std::vector<int> m_cursorsY;
+		float m_cellWidth;	/// The width of a cell in "pixels"
+		float m_cellHeight;	/// The height of a cell in "pixels"
 
-
-		// Logging / Debug
+		// Logging / Debug (UWP does not support stdout)
 		void log(std::wstring ws);
 		void log(std::string s);
 		void log(Platform::String^ s);
