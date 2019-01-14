@@ -10,11 +10,18 @@
 
 #include <direct.h>	// Directory utility
 
+#include "utils.h"
+
+#include "AI/Player.h"
+#include "AI/DumbAI.h"
+#include "AI/Manual.h"
+
 namespace Labyrinth {
 
-	/*	Labyrinth scene renderer
-	**
-	**	Updates and draws the labyrinth on the screen
+	/**
+	* Labyrinth scene renderer
+	*
+	*	Updates and draws the labyrinth on the screen
 	*/
 	class LabyrinthSceneRenderer {
 	public:
@@ -30,11 +37,16 @@ namespace Labyrinth {
 		void removePlayer(int player=-1);	/// Remove one player (the last added if -1)
 		void reloadFromFile();	/// Reload the pattern from the file and reset the positions
 
-		void moveUp(int player=0);	/// Move the player 1 cell up
-		void moveDown(int player=0);	/// Move the player 1 cell down
-		void moveLeft(int player=0);	/// Move the player 1 cell to the left
-		void moveRight(int player=0);	/// Move the player 1 cell to the right
-		void moveTo(int x, int y, int player=0);	/// Move the cursor of a player to another cell
+		Manual* getManual();
+
+		void moveDirection(Directions dir, int player=0);	/// Schedules a move of a player, 1 cell in one direction
+		void moveTo(Position pos, int player=0);	/// Schedules a move of a player to another cell
+
+		Cell getCell(Position at);
+
+		int stepOnce();	/// Commits the scheduled moves and returns the turn number
+		void augmentFrequency();
+		void diminishFrequency();
 
 	private:
 		// Cached pointer to device resources.
@@ -50,17 +62,25 @@ namespace Labyrinth {
 		// Labyrinth resources
 		void loadLabyrinthFromFile(std::string filename);	/// Load the labyrinth patter from a file
 		std::string m_labyrinthPatternFileName;	/// The default filename to load
-		std::vector< std::vector<char> > m_labyrinth;	/// Vector to store the labyrinth data (walls, origin, end...)
+		std::vector< std::vector<Cell> > m_labyrinth;	/// Vector to store the labyrinth data (walls, origin, end...)
 		int m_sizeX;	/// The width in cells of the labyrinth
 		int m_sizeY;	/// The height in cells of the labyrinth
-		int m_originX;	/// The starting cell X coordinate
-		int m_originY;	/// The starting cell Y coordinate
+		Position m_originPosition; /// The starting cell position
+		Position m_endPosition;	/// The end cell position
+
 		int m_playerCount;	/// Number of player actually playing
-		std::vector<int> m_cursorsX;	/// The X coodinate of each player
-		std::vector<int> m_cursorsY;	/// The Y coordinate of each player
+		std::vector<Position> m_playersPosition;	/// The coodinate of each player
+
+		std::vector<Player*> m_players;
 
 		float m_cellWidth;	/// The width of a cell in "pixels"
 		float m_cellHeight;	/// The height of a cell in "pixels"
+
+		// Turns
+		double m_timeSinceLastTurn;	/// The time in seconds since the last turn
+		double m_turnFrequency;	/// The frequency at which the turns elapse
+		int m_turnCount;	/// The actual turn number
+		std::vector<Directions> m_playersDirection;	/// The next turn's scheduled directions for each player
 
 		// Logging / Debug (UWP does not support stdout)
 		void log(std::wstring ws);

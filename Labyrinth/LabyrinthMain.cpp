@@ -2,6 +2,8 @@
 #include "LabyrinthMain.h"
 #include "Common\DirectXHelper.h"
 
+#include "Content/AI/Manual.h"
+
 using namespace Labyrinth;
 using namespace Windows::Foundation;
 using namespace Windows::System::Threading;
@@ -80,19 +82,23 @@ bool LabyrinthMain::Render()
 */
 void LabyrinthMain::keyPressed(Windows::UI::Core::KeyEventArgs^ args) {
 	if (args->VirtualKey == Windows::System::VirtualKey::Up)
-		m_labyrinthSceneRenderer->moveUp();
+		m_labyrinthSceneRenderer->getManual()->moveDirection(up);
 	if (args->VirtualKey == Windows::System::VirtualKey::Down)
-		m_labyrinthSceneRenderer->moveDown();
+		m_labyrinthSceneRenderer->getManual()->moveDirection(down);
 	if (args->VirtualKey == Windows::System::VirtualKey::Left)
-		m_labyrinthSceneRenderer->moveLeft();
+		m_labyrinthSceneRenderer->getManual()->moveDirection(left);
 	if (args->VirtualKey == Windows::System::VirtualKey::Right)
-		m_labyrinthSceneRenderer->moveRight();
+		m_labyrinthSceneRenderer->getManual()->moveDirection(right);
 	if (args->VirtualKey == Windows::System::VirtualKey::F5)
 		m_labyrinthSceneRenderer->reloadFromFile();
 	if (args->VirtualKey == Windows::System::VirtualKey::Add)
 		m_labyrinthSceneRenderer->addPlayer();
 	if (args->VirtualKey == Windows::System::VirtualKey::Subtract)
 		m_labyrinthSceneRenderer->removePlayer(-1);
+	if (args->VirtualKey == Windows::System::VirtualKey::Multiply)
+		m_labyrinthSceneRenderer->augmentFrequency();
+	if (args->VirtualKey == Windows::System::VirtualKey::Divide)
+		m_labyrinthSceneRenderer->diminishFrequency();
 }
 
 // Notifies renderers that device resources need to be released.

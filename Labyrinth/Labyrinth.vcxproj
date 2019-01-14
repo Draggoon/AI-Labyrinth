@@ -260,7 +260,11 @@
   <ItemGroup>
     <ClInclude Include="App.h" />
     <ClInclude Include="Common\DeviceResources.h" />
+    <ClInclude Include="Content\AI\Player.h" />
+    <ClInclude Include="Content\AI\DumbAI.h" />
+    <ClInclude Include="Content\AI\Manual.h" />
     <ClInclude Include="Content\LabyrinthSceneRenderer.h" />
+    <ClInclude Include="Content\utils.h" />
     <ClInclude Include="LabyrinthMain.h" />
     <ClInclude Include="Common\DirectXHelper.h" />
     <ClInclude Include="Common\StepTimer.h" />
@@ -270,7 +274,11 @@
   <ItemGroup>
     <ClCompile Include="App.cpp" />
     <ClCompile Include="Common\DeviceResources.cpp" />
+    <ClCompile Include="Content\AI\Player.cpp" />
+    <ClCompile Include="Content\AI\DumbAI.cpp" />
+    <ClCompile Include="Content\AI\Manual.cpp" />
     <ClCompile Include="Content\LabyrinthSceneRenderer.cpp" />
+    <ClCompile Include="Content\utils.cpp" />
     <ClCompile Include="LabyrinthMain.cpp" />
     <ClCompile Include="Content\SampleFpsTextRenderer.cpp" />
     <ClCompile Include="pch.cpp">

@@ -47,6 +47,9 @@
     <Image Include="Assets\Wide310x150Logo.scale-200.png">
       <Filter>Assets</Filter>
     </Image>
+    <Filter Include="Content\AI">
+      <UniqueIdentifier>{8726c3ff-85a3-4f15-ab7d-2fc5864278dc}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="App.cpp" />
@@ -55,6 +58,18 @@
     <ClCompile Include="Content\LabyrinthSceneRenderer.cpp">
       <Filter>Content</Filter>
     </ClCompile>
+    <ClCompile Include="Content\AI\DumbAI.cpp">
+      <Filter>Content\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Content\utils.cpp">
+      <Filter>Content</Filter>
+    </ClCompile>
+    <ClCompile Include="Content\AI\Manual.cpp">
+      <Filter>Content\AI</Filter>
+    </ClCompile>
+    <ClCompile Include="Content\AI\Player.cpp">
+      <Filter>Content\AI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="App.h" />
@@ -62,6 +77,18 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="Content\LabyrinthSceneRenderer.h">
       <Filter>Content</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\AI\DumbAI.h">
+      <Filter>Content\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\utils.h">
+      <Filter>Content</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\AI\Manual.h">
+      <Filter>Content\AI</Filter>
+    </ClInclude>
+    <ClInclude Include="Content\AI\Player.h">
+      <Filter>Content\AI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

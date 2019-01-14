@@ -14,11 +14,14 @@ LabyrinthSceneRenderer::LabyrinthSceneRenderer(const std::shared_ptr<DX::DeviceR
 	m_labyrinthPatternFileName("LabyrinthPattern.txt"),
 	m_sizeX(0),
 	m_sizeY(0),
-	m_originX(0),
-	m_originY(0),
-	m_playerCount(4),
+	m_originPosition(0, 0),
+	m_endPosition(0, 0),
+	m_playerCount(1),
 	m_cellWidth(100.0f),
-	m_cellHeight(100.0f) {
+	m_cellHeight(100.0f),
+	m_timeSinceLastTurn(0.0),
+	m_turnFrequency(2.0),
+	m_turnCount(0) {
 
 	// Create device independent resources
 
@@ -28,10 +31,15 @@ LabyrinthSceneRenderer::LabyrinthSceneRenderer(const std::shared_ptr<DX::DeviceR
 
 	createDeviceDependentResources();	// init DirectX resources (brushes)
 
+
 	// Set the first players to 0;0
 	for (int i(0); i < m_playerCount; ++i) {
-		m_cursorsX.push_back(0);
-		m_cursorsY.push_back(0);
+		m_playersPosition.emplace_back(0,0);
+		m_playersDirection.push_back(none);
+		if (i == 0)
+			m_players.push_back(new Manual);
+		else
+			m_players.push_back(new DumbAI);
 	}
 
 	// Load the pattern in memory
@@ -76,7 +84,19 @@ void LabyrinthSceneRenderer::createWindowSizeDependentResources() {
 //	##     ## ##        ##     ## ##     ##    ##    ##       
 //	 #######  ##        ########  ##     ##    ##    ######## 
 void LabyrinthSceneRenderer::update(DX::StepTimer const & timer) {
+	m_timeSinceLastTurn += timer.GetElapsedSeconds();
+	if (m_timeSinceLastTurn > (1/m_turnFrequency)) {
+		for (int player(0); player < m_playerCount; ++player) {
+			std::vector<Cell> surroundings{ getCell(Position(m_playersPosition[player].x, m_playersPosition[player].y - 1)),
+				getCell(Position(m_playersPosition[player].x, m_playersPosition[player].y + 1)),
+				getCell(Position(m_playersPosition[player].x - 1, m_playersPosition[player].y)),
+				getCell(Position(m_playersPosition[player].x + 1, m_playersPosition[player].y)) };
 
+			m_playersDirection[player] = m_players[player]->nextMove(m_playersPosition[player], surroundings);
+		}
+		stepOnce();
+		m_timeSinceLastTurn = 0.0;
+	}
 }
 
 
@@ -112,28 +132,28 @@ void LabyrinthSceneRenderer::render() {
 		for (int j(0); j < m_sizeX; ++j) {
 			rect.left = j * m_cellWidth;
 			rect.right = rect.left + m_cellWidth;
-			if (m_labyrinth[i][j] == '#')	// Wall
+			if (m_labyrinth[i][j] == wall)	// Wall
 				context->FillRectangle(rect, m_blackBrush.Get());
-			else if (m_labyrinth[i][j] == 'O')	// Origin
+			else if (Position(j,i) == m_originPosition)	// Origin
 				context->FillRectangle(rect, m_greenBrush.Get());
-			else if (m_labyrinth[i][j] == 'E')	// End
+			else if (Position(j,i) == m_endPosition)	// End
 				context->FillRectangle(rect, m_redBrush.Get());
 		}
 	}
 
 	// Draw the players
 	D2D1_POINT_2F p1, p2;
-	int sqrtNbPlayer(ceil(sqrt(m_playerCount)));	// To place the players on multiple rows if needed
+	int sqrtNbPlayer((int)ceil(sqrt(m_playerCount)));	// To place the players on multiple rows if needed
 	for (int p(0); p < m_playerCount; ++p) {
-		p1.x = m_cursorsX[p] * m_cellWidth + m_cellWidth / 20.0f + (p%sqrtNbPlayer)*m_cellWidth/sqrtNbPlayer;
-		p1.y = m_cursorsY[p] * m_cellHeight + m_cellHeight / 20.0f + (p/sqrtNbPlayer)*m_cellHeight/sqrtNbPlayer;
-		p2.x = m_cursorsX[p] * m_cellWidth - m_cellWidth / 20.0f + (p%sqrtNbPlayer + 1)*m_cellWidth/sqrtNbPlayer;
-		p2.y = m_cursorsY[p] * m_cellHeight - m_cellHeight / 20.0f+ (p/sqrtNbPlayer + 1)*m_cellHeight/sqrtNbPlayer;
+		p1.x = m_playersPosition[p].x * m_cellWidth + m_cellWidth / 20.0f + (p%sqrtNbPlayer)*m_cellWidth/sqrtNbPlayer;
+		p1.y = m_playersPosition[p].y * m_cellHeight + m_cellHeight / 20.0f + (p/sqrtNbPlayer)*m_cellHeight/sqrtNbPlayer;
+		p2.x = m_playersPosition[p].x * m_cellWidth - m_cellWidth / 20.0f + (p%sqrtNbPlayer + 1)*m_cellWidth/sqrtNbPlayer;
+		p2.y = m_playersPosition[p].y * m_cellHeight - m_cellHeight / 20.0f+ (p/sqrtNbPlayer + 1)*m_cellHeight/sqrtNbPlayer;
 		context->DrawLine(p1, p2, m_blackBrush.Get(), 10.0f/(sqrtNbPlayer*sqrtNbPlayer));
-		p1.x = m_cursorsX[p] * m_cellWidth - m_cellWidth / 20.0f + (p%sqrtNbPlayer + 1)*m_cellWidth / sqrtNbPlayer;
-		p1.y = m_cursorsY[p] * m_cellHeight + m_cellHeight / 20.0f + (p / sqrtNbPlayer)*m_cellHeight / sqrtNbPlayer;
-		p2.x = m_cursorsX[p] * m_cellWidth + m_cellWidth / 20.0f + (p%sqrtNbPlayer)*m_cellWidth / sqrtNbPlayer;
-		p2.y = m_cursorsY[p] * m_cellHeight - m_cellHeight / 20.0f + (p/sqrtNbPlayer + 1)*m_cellHeight / sqrtNbPlayer;
+		p1.x = m_playersPosition[p].x * m_cellWidth - m_cellWidth / 20.0f + (p%sqrtNbPlayer + 1)*m_cellWidth / sqrtNbPlayer;
+		p1.y = m_playersPosition[p].y * m_cellHeight + m_cellHeight / 20.0f + (p / sqrtNbPlayer)*m_cellHeight / sqrtNbPlayer;
+		p2.x = m_playersPosition[p].x * m_cellWidth + m_cellWidth / 20.0f + (p%sqrtNbPlayer)*m_cellWidth / sqrtNbPlayer;
+		p2.y = m_playersPosition[p].y * m_cellHeight - m_cellHeight / 20.0f + (p/sqrtNbPlayer + 1)*m_cellHeight / sqrtNbPlayer;
 		context->DrawLine(p1, p2, m_blackBrush.Get(), 10.0f/(sqrtNbPlayer*sqrtNbPlayer));
 	}
 
@@ -148,66 +168,14 @@ void LabyrinthSceneRenderer::render() {
 	context->RestoreDrawingState(m_stateBlock.Get());
 }
 
-/**
-* Move the cursor up by 1 cell
-*
-*	Call a moveTo relative to the player position.
-*	player: the player id (0 by default)
-*/
-void LabyrinthSceneRenderer::moveUp(int player) {
-	if(player >= 0 && player < m_playerCount)
-		moveTo(m_cursorsX[player], m_cursorsY[player] -1, player);
-}
-/**
-* Move the cursor down by 1 cell
-*
-*	Call a moveTo relative to the player position.
-*	player: the player id (0 by default)
-*/
-void LabyrinthSceneRenderer::moveDown(int player) {
-	if (player >= 0 && player < m_playerCount)
-		moveTo(m_cursorsX[player], m_cursorsY[player] + 1, player);
-}
-/**
-* Move the cursor left by 1 cell
-*
-*	Call a moveTo relative to the player position.
-*	player: the player id (0 by default)
-*/
-void LabyrinthSceneRenderer::moveLeft(int player) {
-	if (player >= 0 && player < m_playerCount)
-		moveTo(m_cursorsX[player]-1, m_cursorsY[player], player);
-}
-/**
-* Move the cursor right by 1 cell
-*
-*	Call a moveTo relative to the player position.
-*	player: the player id (0 by default)
-*/
-void LabyrinthSceneRenderer::moveRight(int player) {
-	if (player >= 0 && player < m_playerCount)
-		moveTo(m_cursorsX[player]+1, m_cursorsY[player], player);
-}
 
-/**
-* Move to cell
-*
-*	Move to any cell that is free (not a wall) and not out of bounds.
-*	x, y: the destination coordinates
-*	player: the player to move (0 by default)
-*/
-void LabyrinthSceneRenderer::moveTo(int x, int y, int player) {
-	if (player >= 0 && player < m_playerCount) {
-		if (x < m_sizeX && x >= 0 && y < m_sizeY && y >= 0) {
-			if (m_labyrinth[y][x] != '#') {
-				m_cursorsX[player] = x;
-				m_cursorsY[player] = y;
-				if (m_labyrinth[y][x] == 'E')
-					reloadFromFile();
-			}
-		}
-	}
-}
+//	########  ##          ###    ##    ## ######## ########   ######  
+//	##     ## ##         ## ##    ##  ##  ##       ##     ## ##    ## 
+//	##     ## ##        ##   ##    ####   ##       ##     ## ##       
+//	########  ##       ##     ##    ##    ######   ########   ######  
+//	##        ##       #########    ##    ##       ##   ##         ## 
+//	##        ##       ##     ##    ##    ##       ##    ##  ##    ## 
+//	##        ######## ##     ##    ##    ######## ##     ##  ######  
 
 /**
 * Add 1 player
@@ -215,8 +183,9 @@ void LabyrinthSceneRenderer::moveTo(int x, int y, int player) {
 *	Add a new player at the origin
 */
 void LabyrinthSceneRenderer::addPlayer() {
-	m_cursorsX.push_back(m_originX);
-	m_cursorsY.push_back(m_originY);
+	m_playersPosition.push_back(m_originPosition);
+	m_playersDirection.push_back(none);
+	m_players.push_back(new DumbAI);
 	++m_playerCount;
 }
 
@@ -229,16 +198,101 @@ void LabyrinthSceneRenderer::addPlayer() {
 void LabyrinthSceneRenderer::removePlayer(int player) {
 	if (m_playerCount > 1) {
 		if (player < 0) {
-			m_cursorsX.pop_back();
-			m_cursorsY.pop_back();
+			m_playersPosition.pop_back();
+			m_playersDirection.pop_back();
+			delete m_players.back();
+			m_players.pop_back();
 			--m_playerCount;
 		}
 		else if (player < m_playerCount) {
-			m_cursorsX.erase(m_cursorsX.begin() + player);
-			m_cursorsY.erase(m_cursorsY.begin() + player);
+			m_playersPosition.erase(m_playersPosition.begin() + player);
+			m_playersDirection.erase(m_playersDirection.begin() + player);
+			delete m_players[player];
+			m_players.erase(m_players.begin() + player);
 			--m_playerCount;
 		}
 	}
+}
+
+
+//	 ######  ######## ######## ########   ######  
+//	##    ##    ##    ##       ##     ## ##    ## 
+//	##          ##    ##       ##     ## ##       
+//	 ######     ##    ######   ########   ######  
+//	      ##    ##    ##       ##              ## 
+//	##    ##    ##    ##       ##        ##    ## 
+//	 ######     ##    ######## ##         ######  
+
+/**
+* Move the cursor right by 1 cell
+*
+*	Schedules a move of a player in one direction.
+*	dir: the direction in which the player wants to move
+*	player: the player id (0 by default)
+*/
+void LabyrinthSceneRenderer::moveDirection(Directions dir, int player) {
+	if (player >= 0 && player < m_playerCount) {
+		m_playersDirection[player] = dir;
+	}
+}
+
+/**
+* Move to cell
+*
+*	Move to any cell that is free (not a wall) and not out of bounds.
+*	x, y: the destination coordinates
+*	player: the player to move (0 by default)
+*/
+void LabyrinthSceneRenderer::moveTo(Position pos, int player) {
+	if (player >= 0 && player < m_playerCount) {
+		if (pos.x < m_sizeX && pos.x >= 0 && pos.y < m_sizeY && pos.y >= 0) {
+			if (m_labyrinth[pos.y][pos.x] != wall) {
+				m_playersPosition[player] = pos;
+				if (pos == m_endPosition) {
+					// END REACHED! THROW SOME CODE HERE
+					m_playersPosition[player] = m_originPosition;
+				}
+			}
+		}
+	}
+}
+
+int LabyrinthSceneRenderer::stepOnce() {
+	for (int player(0); player < m_playerCount; ++player) {
+		switch (m_playersDirection[player]) {
+		case up:
+			moveTo(Position(m_playersPosition[player].x, m_playersPosition[player].y-1), player);
+			break;
+		case down:
+			moveTo(Position(m_playersPosition[player].x, m_playersPosition[player].y+1), player);
+			break;
+		case left:
+			moveTo(Position(m_playersPosition[player].x-1, m_playersPosition[player].y), player);
+			break;
+		case right:
+			moveTo(Position(m_playersPosition[player].x+1, m_playersPosition[player].y), player);
+			break;
+		default:
+			;
+		}
+		m_playersDirection[player] = none;
+	}
+	return ++m_turnCount;
+}
+
+void Labyrinth::LabyrinthSceneRenderer::augmentFrequency() {
+	m_turnFrequency *= 2.0;
+}
+
+void Labyrinth::LabyrinthSceneRenderer::diminishFrequency() {
+	m_turnFrequency /= 2;
+}
+
+Cell Labyrinth::LabyrinthSceneRenderer::getCell(Position at) {
+	if (at.x >= 0 && at.x < m_sizeX && at.y >= 0 && at.y < m_sizeY)
+		return m_labyrinth[at.y][at.x];
+	else
+		return wall;
 }
 
 
@@ -257,6 +311,10 @@ void LabyrinthSceneRenderer::removePlayer(int player) {
 */
 void LabyrinthSceneRenderer::reloadFromFile() {
 	loadLabyrinthFromFile(m_labyrinthPatternFileName);
+}
+
+Manual * Labyrinth::LabyrinthSceneRenderer::getManual() {
+	return (Manual*)(m_players[0]);
 }
 
 /**
@@ -298,7 +356,7 @@ void LabyrinthSceneRenderer::loadLabyrinthFromFile(std::string filename) {
 	int tX = 0;
 
 	// Fill the labyrinth with data from the file
-	std::vector<char> vec;
+	std::vector<Cell> vec;
 	while (str.size() > 0) {
 		if (str.size() > 1) {
 			m_labyrinth.push_back(vec);
@@ -306,20 +364,27 @@ void LabyrinthSceneRenderer::loadLabyrinthFromFile(std::string filename) {
 		}
 		while (str.front() != '\n') {
 			// Origin found
-			if (str.front() == 'o' || str.front() == 'O') {
+			switch (str.front()) {
+			case 'o':
+			case 'O':
+				m_originPosition = Position((int)m_labyrinth.back().size(), (int)m_labyrinth.size() - 1);
 				for (int i(0); i < m_playerCount; ++i) {
-					m_originX = (int)m_labyrinth.back().size();
-					m_originY = (int)m_labyrinth.size() - 1;
-					m_cursorsX[i] = m_originX;
-					m_cursorsY[i] = m_originY;
+					m_playersPosition[i] = m_originPosition;
 				}
-				str.front() = 'O';	// Set to uppercase
+				m_labyrinth.back().push_back(empty);
+				break;
+			case 'e':
+			case 'E':
+				m_endPosition = Position((int)m_labyrinth.back().size(), (int)m_labyrinth.size() - 1);
+				m_labyrinth.back().push_back(empty);
+				break;
+			case '#':
+				m_labyrinth.back().push_back(wall);
+				break;
+			default:
+				m_labyrinth.back().push_back(empty);
 			}
-			// End found
-			if (str.front() == 'e' || str.front() == 'E') {
-				str.front() = 'E';	// Set to uppercase
-			}
-			m_labyrinth.back().push_back(str.front());
+
 			str.erase(0, 1);
 			++tX;
 			if (str.size() == 0)
@@ -335,11 +400,12 @@ void LabyrinthSceneRenderer::loadLabyrinthFromFile(std::string filename) {
 	// Adding walls to the end of the shorter lines
 	for (size_t i(0); i < m_labyrinth.size(); ++i) {
 		while (m_labyrinth[i].size() < m_sizeX)
-			m_labyrinth[i].push_back('#');
+			m_labyrinth[i].push_back(wall);
 	}
 
 	// fstr automatically closed
 }
+
 
 
 // ##        #######   ######   
